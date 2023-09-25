@@ -4,47 +4,64 @@ import { useState, createContext } from "react";
 function App() {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoding] = useState(false);
-  const [page,setPage]=useState(false)
-  const dataHandler=()=>{
+  const [error, setError] = useState(null);
+  const [retrys, setRetry] = useState(true);
+     
+
+  console.log("firstTime")
+
 
   const fetchMoviesHandler = async () => {
-    setPage(false)
-    setIsLoding(true)
-    const response = await fetch("https://swapi.dev/api/films/");
-    const data = await response.json();
+    setIsLoding(true);
+    setError(null);
 
-    const transformMovies = await data.results.map((moviedata) => {
-      return {
-        id: moviedata.episode_id,
-        title: moviedata.title,
-        openingText: moviedata.opening_crawl,
-      };
-    });
-    setIsLoding(false)
-    setMovies(transformMovies);
+    try {
+      const response = await fetch("https://swapi.dev/api/film/");
+
+      if (retrys) {
+        console.log("jd")
+        setIsLoding(false);
+
+  
+      
+       
+      throw new Error("something went wrong retrying...")
+      }
+      const data = await response.json();
+      const transformMovies = data.results.map((moviedata) => {
+        return {
+          id: moviedata.episode_id,
+          title: moviedata.title,
+          openingText: moviedata.opening_crawl,
+        };
+      });
+
+      setMovies(transformMovies);
+    } catch (error) {
+      setError(error.message);
+    }
+    setIsLoding(false);
   };
 
-  fetchMoviesHandler();
-  }
- 
-  const  backHandler=()=>{
-    setPage(true)
-  }
-
+  const retryHandler = () => {
+    setRetry(false);
+    console.log(retrys)
+  };
 
   return (
     <>
-     <button   onClick={dataHandler}>Click me </button>
-     <button onClick={backHandler}>Back</button>
-      {!page && movies.map((mov) => (
-        <>
-       
-          <h1>{mov.id}</h1>
-          <h1>{mov.title}</h1>
-          <h1>{mov.openingText}</h1>
-        </>
-      ))}
+      <button onClick={fetchMoviesHandler}>Click me </button>
+      <button onClick={retryHandler}>Cancel</button>
+      {!isLoading &&
+        movies.map((mov) => (
+          <>
+            <h1>{mov.id}</h1>
+            <h1>{mov.title}</h1>
+            <h1>{mov.openingText}</h1>
+          </>
+        ))}
       {isLoading && <h1>loading</h1>}
+      {error && <p>{error}</p>}
     </>
   );
 }
